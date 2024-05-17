@@ -1,0 +1,51 @@
+{
+  "name": "test-pro",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "npm run build && npm run serve",
+    "build": "npm run clean && npm run build-ts",
+    "dev": "ts-node-dev --respawn --inspect=9998 --transpile-only --exit-child --rs --ignore-watch node_modules --watch src ./src/app.ts",
+    "clean": "rimraf ./dist",
+    "serve": "node dist/app.js",
+    "build-ts": "tsc",
+    "create-env": "printenv > .env",
+    "lint:fix": "eslint --fix . --ext .ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-iam": "^3.577.0",
+    "@aws-sdk/client-s3": "^3.577.0",
+    "@aws-sdk/credential-provider-ini": "^3.577.0",
+    "aws-sdk": "^2.1621.0",
+    "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-fileupload": "^1.5.0",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/express-fileupload": "^1.5.0",
+    "@types/multer": "^1.4.11",
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5"
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
