@@ -76,7 +76,7 @@ export async function uploadImageViaPath(bucketName: string, key: string, filePa
 }
 
 
-// GET:: fetch file from wasabi object 
+// GET:: fetch file from wasabi bucket
 export async function readFileFromWasabi(bucketName: string, key: string, filePath: string ) {
     try {
         const command = new GetObjectCommand({

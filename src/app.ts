@@ -77,6 +77,15 @@ app.post("/upload", upload.single("file"), async (req: Request, res: Response) =
         return res.status(400).send('No file uploaded.');
     }
 
+    const base64Data = new Buffer(JSON.stringify(file)).toString("base64");
+
+
+        // console.log('buffer:', file.buffer.toString('base64'))
+        // console.log('buffer:', file.buffer.toString('utf8'))
+        // console.log('file:', file)
+
+        console.log(base64Data);
+
     // Test by use command
     const commeand = new PutObjectCommand({
         Bucket: bucketName,
@@ -87,8 +96,6 @@ app.post("/upload", upload.single("file"), async (req: Request, res: Response) =
 
     const response = await client.send(commeand);
     
-
-
     // const response = await uploadImageViaPath(bucketName, key, fileBuffer,  mimeType);
     // const response = await uploadImageViaPath(bucketName, key,  filePath);
     
