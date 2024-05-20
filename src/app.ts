@@ -8,7 +8,7 @@ import * as path from "path";
 import * as dotenv from 'dotenv';
 import multer from 'multer';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { readFileFromWasabi, createFolder, uploadFileToWasabiFolder, uploadImageViaPath } from './uploadWasabi';
+import { readFileFromWasabi, createFolder, uploadFileToWasabiFolder, uploadImageViaPath, deleteFolder, listFolders } from './uploadWasabi';
 import { S3Client } from "@aws-sdk/client-s3";
 
 // ENVIROMENT
@@ -125,20 +125,39 @@ app.get("/download", async (req: Request, res: Response) => {
 });
 
 
+
+
 // CREATE:: user create owner folder
 app.post("/create-folder", async (req: Request, res: Response) => {
+    const data = req.body;
     try {
         const bucket = bucketName;
-        const folderName = "sbd-folder";
-
+        const folderName = `${data.folder_name}`;
+        
         const response = await createFolder(bucket, folderName);
-
+        
         res.send(response);
     } catch (error) {
         console.error("can not create folder to wasabi bucket", error);
         throw error;
     }
 });
+
+// GET:: fetch all folder lists from wasabi bucket
+app.get("/folders", async (req: Request, res: Response) => {
+    try {
+        const bucket = bucketName;
+        const prefix = "";
+
+        const folders = await listFolders(bucket, prefix);
+
+        res.send({ folders });
+    } catch (error) {
+        console.error("can not read folders from wasabi bucket", error);
+        throw error;
+    }
+});
+
 
 // CREATE:: upload file to node folder
 app.post("/folders/:folderName/upload", async (req: Request, res: Response) => {
@@ -151,10 +170,29 @@ app.post("/folders/:folderName/upload", async (req: Request, res: Response) => {
 
         res.send(result);
     } catch (error) {
-        console.log("Error upload file to folder", error);
+        console.error("Error upload file to folder", error);
         throw error;
     }
 });
+
+// Delete:: folder from wasabi bucket
+app.delete("/folders/delete", async (req: Request, res: Response) => {
+    try {
+        const folderName = req.body.folder_name;
+        const bucket = bucketName;
+
+        const response = await deleteFolder(bucket, folderName);
+
+
+        res.send(response);
+    } catch (error) {
+        console.error("Error delete folder from  buckets", error);
+        throw error;
+    }
+});
+
+// Delete:: delete objects
+
 
 // CREATE:: upload multiple files streaming
 app.post("/multi-upload", upload.array("files"), (req: Request, res: Response) => {
