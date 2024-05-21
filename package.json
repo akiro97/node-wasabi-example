@@ -6,9 +6,9 @@
   "scripts": {
     "start": "npm run build && npm run serve",
     "build": "npm run clean && npm run build-ts",
-    "dev": "ts-node-dev --respawn --inspect=9998 --transpile-only --exit-child --rs --ignore-watch node_modules --watch src ./src/app.ts",
+    "dev": "ts-node-dev --respawn --inspect=9998 --transpile-only --exit-child --rs --ignore-watch node_modules --watch src ./src/server.ts",
     "clean": "rimraf ./dist",
-    "serve": "node dist/app.js",
+    "serve": "node dist/server.js",
     "build-ts": "tsc",
     "create-env": "printenv > .env",
     "lint:fix": "eslint --fix . --ext .ts"
