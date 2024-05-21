@@ -97,6 +97,28 @@ export async function uploadImageViaPath(bucketName: string, key: string, filePa
 }
 
 
+// upload file to wasabi folder
+export async function uploadFileToFolder(bucketName: string, folderName: string, file: Express.Multer.File) {
+    const uploadParams = {
+            Bucket: bucketName,
+            Key: `${folderName}/${file.originalname}`,
+            Body: file.buffer,
+            ContentType: file.mimetype
+    }
+    try {
+     const command = new PutObjectCommand(uploadParams);
+     
+     const response = await client.send(command);
+
+     return response;
+    } catch (error) {
+        console.error(`Error upload file to wasabi ${folderName}`);
+        throw error;
+    }
+}
+
+
+
 // GET:: fetch file from wasabi bucket
 export async function readFileFromWasabi(bucketName: string, key: string, filePath: string ) {
     try {
