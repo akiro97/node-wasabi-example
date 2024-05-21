@@ -8,7 +8,7 @@ import * as path from "path";
 import * as dotenv from 'dotenv';
 import multer from 'multer';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { readFileFromWasabi, createFolder, uploadFileToWasabiFolder, uploadImageViaPath, deleteFolder, listFolders } from './uploadWasabi';
+import { readFileFromWasabi, createFolder, uploadFileToWasabiFolder, uploadImageViaPath, deleteFolder, listFolders, listObjects } from './providers/wasabi';
 import { S3Client } from "@aws-sdk/client-s3";
 
 // ENVIROMENT
@@ -60,7 +60,7 @@ app.use(express.static(__dirname + "./public"));
 
 
 // Routes
-app.get("/", (req: Request, res: Response) => {
+app.get("/", async (_req: Request, res: Response) => {
     res.send("application is healthy...!")
 });
 
@@ -123,9 +123,6 @@ app.get("/download", async (req: Request, res: Response) => {
         throw error;
     }
 });
-
-
-
 
 // CREATE:: user create owner folder
 app.post("/create-folder", async (req: Request, res: Response) => {
@@ -190,6 +187,22 @@ app.delete("/folders/delete", async (req: Request, res: Response) => {
         throw error;
     }
 });
+
+
+// GET:: fetch all objects from wasabi bucket
+app.get("/file-objects", async (req: Request, res: Response) => {
+    try {
+        const bucket = bucketName;
+        const prefix = "";
+
+        const items = await listObjects(bucket, prefix);
+
+        res.send(items);
+    } catch (error) {
+        console.error("Error to fetching objects from buckets");
+        throw error;
+    }
+})
 
 // Delete:: delete objects
 

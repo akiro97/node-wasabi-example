@@ -1,7 +1,14 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from 'dotenv';
-import { S3Client, PutObjectCommand, GetObjectCommand, GetObjectCommandOutput, ListObjectsV2Command, ListObjectsV2CommandOutput, DeleteObjectCommand, DeleteObjectsCommand,  } from '@aws-sdk/client-s3';
+import { S3Client, 
+    PutObjectCommand, 
+    GetObjectCommand, 
+    GetObjectCommandOutput,
+    ListObjectsV2Command, 
+    ListObjectsV2CommandOutput,
+    DeleteObjectsCommand,  
+} from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 
 
@@ -24,6 +31,20 @@ const client = new S3Client({
         secretAccessKey: secretKey
     }
 });
+
+// WORK WITH BUCKETS
+
+
+// WORK WITH FOLDERS IN BUCKET
+
+
+// WORK WITH OBJECTS IN BUCKET
+
+
+// WORK WITH FOLDERS
+
+
+// WORK WITH OBJECTS IN FOLDER
 
 
 // Create global upload function option 1 -- Root bucket
