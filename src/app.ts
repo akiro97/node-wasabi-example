@@ -10,7 +10,7 @@ import multer from 'multer';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { readFileFromWasabi, createFolder, uploadFileToWasabiFolder, uploadImageViaPath, deleteFolder, listFolders, listObjects } from './providers/wasabi';
 import { S3Client } from "@aws-sdk/client-s3";
-
+import storage from './utils/multer';
 // ENVIROMENT
 dotenv.config();
 
@@ -33,14 +33,14 @@ const client = new S3Client({
 
 
 //Config Multer
-const storage = multer.diskStorage({
-    destination: (_req: Request, _file, cb) => {
-        cb(null, "public/");
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
+// const storage = multer.diskStorage({
+//     destination: (_req: Request, _file, cb) => {
+//         cb(null, "public/");
+//     },
+//     filename: (req, file, cb) => {
+//         cb(null, `${Date.now()}-${file.originalname}`);
+//     }
+// });
 
 const upload = multer({ storage });
 const bucketName = process.env.WASABI_BUCKET_NAME!
@@ -107,7 +107,6 @@ app.post("/upload", upload.single("file"), async (req: Request, res: Response) =
    }
 });
 
-
 // GET:: reading file from wasabi
 app.get("/download", async (req: Request, res: Response) => {
     try {
@@ -155,12 +154,11 @@ app.get("/folders", async (req: Request, res: Response) => {
     }
 });
 
-
 // CREATE:: upload file to node folder
-app.post("/folders/:folderName/upload", async (req: Request, res: Response) => {
+app.post("/folders/:folder_name/upload", async (req: Request, res: Response) => {
     try {
         const bucket = bucketName;
-        const folderName = req.params.folderName;
+        const folderName = req.params.folder_name;
         const filePath = "public/1715913489789-Screenshot 2024-05-15 141657.png"; // file from local device path
 
         const result = await uploadFileToWasabiFolder(bucket, folderName, filePath);
@@ -188,7 +186,6 @@ app.delete("/folders/delete", async (req: Request, res: Response) => {
     }
 });
 
-
 // GET:: fetch all objects from wasabi bucket
 app.get("/file-objects", async (req: Request, res: Response) => {
     try {
@@ -207,13 +204,9 @@ app.get("/file-objects", async (req: Request, res: Response) => {
 // Delete:: delete objects
 
 
-// CREATE:: upload multiple files streaming
-app.post("/multi-upload", upload.array("files"), (req: Request, res: Response) => {
-    res.send("file upload successfully...!")
-});
-
-
-
 app.listen(port, () => {
     console.log(`Server is Started on http://localhost:${port}`)
 });
+
+
+export default app;
