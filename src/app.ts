@@ -5,9 +5,14 @@ import cookieParser from 'cookie-parser';
 import * as fs from "fs";
 import * as dotenv from 'dotenv';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { readFileFromWasabi, createFolder, uploadFileToWasabiFolder, uploadImageViaPath, deleteFolder, listFolders, listObjects, uploadFileToFolder } from './providers/wasabi';
+import { readFileFromWasabi, createFolder, uploadFileToWasabiFolder, deleteFolder, listFolders, listObjects, uploadFileToFolder, listObjectsInFolder, listObjectsInFolderV2 } from './providers/wasabi';
 import { S3Client } from "@aws-sdk/client-s3";
 import upload from './utils/multer';
+
+// Endpoin Api
+import BaseApi from './api/base.api';
+
+
 // ENVIROMENT
 dotenv.config();
 
@@ -26,6 +31,9 @@ const client = new S3Client({
         secretAccessKey: secretKey
     }
 });
+
+// User endpoint Api
+const baseApi = BaseApi.InitApi().commitApi();
 
 const bucketName = process.env.WASABI_BUCKET_NAME!
 
@@ -49,12 +57,15 @@ export default class App {
         this.app.use(cors());
         this.app.use(bodyParser.json());
         this.app.use(express.static(__dirname + "./public"));
-        
-        
+
         // Routes
         this.app.get("/", async (_req: Request, res: Response) => {
             res.send("application is healthy...!")
         });
+        
+        // Global Api Router
+        this.app.use("/api", baseApi);
+        
         
         // CREATE:: upload file streaming --> Root Bucket
         this.app.post("/upload", upload.single("file"), async (req: Request, res: Response) => {
@@ -147,7 +158,7 @@ export default class App {
         
         
         // CREATE:: upload file
-        this.app.post("/folders/upload",  upload.single("file"), async (req, res) => {
+        this.app.post("/folders/upload",  upload.single("file"), async (req: Request, res: Response) => {
             try {
                 const bucket = bucketName;
                 const folderName = "my-extra-photo"; 
@@ -161,8 +172,23 @@ export default class App {
             } catch (error) {
                 res.status(500).send("Error uploading file.");
             }
-        })
-        
+        });
+
+        this.app.get("/folders/get-object-lists", async (req: Request, res: Response) => {
+            try {
+                const bucket = bucketName;
+                const folderName = req.params.folder_name;
+
+                const results = await listObjectsInFolderV2(bucket, folderName);
+
+                console.log("results from response: ", results)
+
+                res.status(200).send(results);
+            } catch (error) {
+                res.status(500).send("Error reach to the files.");
+            }
+        });
+
         // CREATE:: upload file to node folder
         this.app.post("/folders/:folder_name/upload", upload.single("file"), async (req: Request, res: Response) => {
             try {
@@ -214,7 +240,7 @@ export default class App {
                 console.error("Error to fetching objects from buckets");
                 throw error;
             }
-        })
+        });
     }
 
     // Get App Instance
