@@ -10,7 +10,10 @@ import { S3Client,
     DeleteObjectsCommand,  
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
-
+import { pipeline } from "stream";
+import { promisify } from "util";
+// REading files from wasabi folder
+const streamPipeline = promisify(pipeline);
 
 // ENVIROMENT
 dotenv.config();
@@ -32,19 +35,7 @@ const client = new S3Client({
     }
 });
 
-// WORK WITH BUCKETS
-
-
-// WORK WITH FOLDERS IN BUCKET
-
-
-// WORK WITH OBJECTS IN BUCKET
-
-
-// WORK WITH FOLDERS
-
-
-// WORK WITH OBJECTS IN FOLDER
+// CREATE:: upload folder from local to wasabi bucket
 
 
 // Create global upload function option 1 -- Root bucket
@@ -95,28 +86,6 @@ export async function uploadImageViaPath(bucketName: string, key: string, filePa
 
     }
 }
-
-
-// upload file to wasabi folder
-export async function uploadFileToFolder(bucketName: string, folderName: string, file: Express.Multer.File) {
-    const uploadParams = {
-            Bucket: bucketName,
-            Key: `${folderName}/${file.originalname}`,
-            Body: file.buffer,
-            ContentType: file.mimetype
-    }
-    try {
-     const command = new PutObjectCommand(uploadParams);
-     
-     const response = await client.send(command);
-
-     return response;
-    } catch (error) {
-        console.error(`Error upload file to wasabi ${folderName}`);
-        throw error;
-    }
-}
-
 
 
 // GET:: fetch file from wasabi bucket
@@ -203,6 +172,133 @@ export async function listFolders(bucketName: string, prefix: string = ''): Prom
 }
 
 
+
+// DELETE:: to delete folder from wasabi bucket --> Check if empty folder else delete objects
+export async function deleteFolder(bucketName: string, folderName: string) {
+    try {
+
+        let continuattionToken: string | undefined = undefined;
+
+        // Check foder is empty
+        do {
+            const listResponseObjects = await listObjects(bucketName, folderName);
+            const objects = listResponseObjects.Contents || [];
+
+            if(objects.length > 0) {
+                const keys = objects.map((object) => object.Key!);
+
+                const resp = await deleteObjects(bucketName, keys);
+
+                console.log(`Deleted '${keys.length}' objects from folder '${folderName}'`);
+
+                return resp;
+            }
+            
+            continuattionToken =  listResponseObjects.NextContinuationToken;
+            
+        }while (continuattionToken);
+
+        console.log(`Folder '${folderName}' and all its contents deleted from bucket '${bucketName}'`)
+
+        // Try to find th way to response some of logical message or data back frontend
+
+    } catch (error) {
+        console.log("Error delete folder from bucket", error);
+        throw error;
+    }
+}
+
+//CREATE:: upload file to wasabi folder
+export async function uploadFileToFolder(bucketName: string, folderName: string, file: Express.Multer.File) {
+    const uploadParams = {
+            Bucket: bucketName,
+            Key: `${folderName}/${file.originalname}`,
+            Body: file.buffer,
+            ContentType: file.mimetype
+    }
+    try {
+     const command = new PutObjectCommand(uploadParams);
+     
+     const response = await client.send(command);
+
+     return response;
+    } catch (error) {
+        console.error(`Error upload file to wasabi ${folderName}`);
+        throw error;
+    }
+}
+
+
+// GET:: fetch all files from wasabi folder
+export async function listObjectsInFolder(bucketName: string, folderName: string) {
+    try {
+        const listParams = {
+            Bucket: bucketName,
+            Prefix: folderName
+        };
+
+
+        const command = new ListObjectsV2Command(listParams);
+
+        const response = await client.send(command);
+
+        return response;
+    } catch (error) {
+        console.error(`Error fetching file from wasabi ${folderName}`);
+        throw error;
+    }
+}
+
+
+/**
+ * Lists objects in a specific folder in a Wasabi bucket.
+ * @param bucketName - The name of the Wasabi bucket.
+ * @param folderName - The folder inside the bucket.
+ */
+
+// GET:: fetch all files from wasabi folder
+export async function listObjectsInFolderV2(bucketName: string, folderName: string) {
+    try {
+        const listParams = {
+            Bucket: bucketName,
+            Prefix: folderName
+        };
+
+
+        const command = new ListObjectsV2Command(listParams);
+        const response = await client.send(command);
+        const keys = response.Contents?.map(object => object.Key) || [];
+        return keys;
+    } catch (error) {
+        console.error("Error listing objects:", error);
+        throw error;
+    }
+}
+
+// GET:: fetch all files from wasabi folders
+// export async function fetchFileFromWasabi(bucketName: string, key: string, downloadPath: string) {
+//     const getParams = {
+//       Bucket: bucketName,
+//       Key: key,
+//     };
+  
+//     try {
+//       const command = new GetObjectCommand(getParams);
+//       const response = await client.send(command);
+//       const writeStream = fs.createWriteStream(downloadPath);
+  
+//       if (!response.Body) {
+//         throw new Error("Response body is undefined");
+//       }
+  
+//       await streamPipeline(response.Body, writeStream);
+//       console.log(`File downloaded successfully to ${downloadPath}`);
+//     } catch (error) {
+//       console.error("Error fetching file:", error);
+//       throw error;
+//     }
+// };
+
 // CRATE:: uplaod file to folder on wasabi
 export async function uploadFileToWasabiFolder(bucketName: string, folderName: string, filePath: string) {
     try {
@@ -240,7 +336,7 @@ export async function listObjects(bucketName: string, prefix: string): Promise<L
 
         return response;
     } catch (error) {
-        console.log("Error list object from folder", error);
+        console.log("Error list object from bucket", error);
         throw error;
     }
 }
@@ -261,39 +357,3 @@ export async function deleteObjects(bucketName: string, keys: string[]) {
 
     return result;
 } 
-
-
-// DELETE:: to delete folder from wasabi bucket --> Check if empty folder else delete objects
-export async function deleteFolder(bucketName: string, folderName: string) {
-    try {
-
-        let continuattionToken: string | undefined = undefined;
-
-        // Check foder is empty
-        do {
-            const listResponseObjects = await listObjects(bucketName, folderName);
-            const objects = listResponseObjects.Contents || [];
-
-            if(objects.length > 0) {
-                const keys = objects.map((object) => object.Key!);
-
-                const resp = await deleteObjects(bucketName, keys);
-
-                console.log(`Deleted '${keys.length}' objects from folder '${folderName}'`);
-
-                return resp;
-            }
-            
-            continuattionToken =  listResponseObjects.NextContinuationToken;
-            
-        }while (continuattionToken);
-
-        console.log(`Folder '${folderName}' and all its contents deleted from bucket '${bucketName}'`)
-
-        // Try to find th way to response some of logical message or data back frontend
-
-    } catch (error) {
-        console.log("Error delete folder from bucket", error);
-        throw error;
-    }
-}
